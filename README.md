@@ -315,4 +315,5 @@ Une découpe en modules est prévue (voir [ROADMAP.md](ROADMAP.md)).
 
 ## Licence
 
-À préciser par le mainteneur du projet.
+Distribué sous **licence MIT** — voir [LICENSE](LICENSE) pour le texte
+intégral. Copyright (c) 2026 @scadinot.

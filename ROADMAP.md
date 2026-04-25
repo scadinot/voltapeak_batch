@@ -34,7 +34,7 @@ difficiles.
 
 **Piste technique.** Éclater en :
 ```
-pybaseline/
+voltapeak_batch/
 ├── __init__.py
 ├── io.py          # readFile, export
 ├── processing.py  # smoothSignal, getPeakValue, calculateSignalBaseLine
@@ -59,10 +59,10 @@ de la GUI ; un handler fichier pour les exécutions automatisées.
 
 **Motivation.** Pour intégrer l'outil à une chaîne automatisée (CI,
 serveur d'analyse, script batch), la GUI Tkinter est un obstacle. Un
-mode ligne de commande permettrait `pybaseline --input ./data --export xlsx`.
+mode ligne de commande permettrait `voltapeak_batch --input ./data --export xlsx`.
 
 **Piste technique.** `argparse` dans `cli.py`. Point d'entrée déclaré
-dans `pyproject.toml` (`[project.scripts] pybaseline = "pybaseline.cli:main"`).
+dans `pyproject.toml` (`[project.scripts] voltapeak_batch = "voltapeak_batch.cli:main"`).
 
 ---
 

@@ -24,29 +24,17 @@ réels des utilisateurs.
 
 ## Court terme — qualité de base du projet
 
-### 1. Ajouter un `requirements.txt` et/ou un `pyproject.toml`
+### 1. Ajouter un `.gitignore`
 
-**Motivation.** Aujourd'hui, les dépendances ne sont listées que dans
-les `import` du script. Un nouvel utilisateur doit les deviner. Un
-fichier standard permet `pip install -r requirements.txt` en une
-commande et fige les versions testées.
+**Motivation.** Le dépôt ne dispose pas encore de `.gitignore`. Sans lui,
+les artefacts générés (`__pycache__/`, `.venv/`, dossiers `* (results)`,
+fichiers de build) risquent d'être committés par erreur.
 
-**Piste technique.** Générer `requirements.txt` à partir de
-l'environnement courant (`pip freeze | grep -E '^(numpy|pandas|…)'`).
-Mieux : passer à `pyproject.toml` (PEP 621) pour une installation
-standardisée (`pip install .`) et pouvoir déclarer un point d'entrée
-CLI.
-
-### 2. Initialiser un dépôt Git et ajouter un `.gitignore`
-
-**Motivation.** Le dossier n'est pas versionné. Cela prive le projet
-d'historique, de branches et de collaboration possible.
-
-**Piste technique.** `git init` + `.gitignore` typique Python (`__pycache__/`,
+**Piste technique.** `.gitignore` typique Python (`__pycache__/`,
 `.venv/`, `*.egg-info/`, `dist/`, `build/`) + exclusion des dossiers
 `* (results)` générés.
 
-### 3. Extraire le code en modules
+### 2. Extraire le code en modules
 
 **Motivation.** Les ~600 lignes actuelles mélangent entrée/sortie,
 algorithmes numériques, génération de graphiques, parallélisme et
@@ -66,7 +54,7 @@ pybaseline/
 └── cli.py         # mode batch sans GUI
 ```
 
-### 4. Remplacer les `print` et mises à jour directes du widget par `logging`
+### 3. Remplacer les `print` et mises à jour directes du widget par `logging`
 
 **Motivation.** Les messages d'erreur sont actuellement imprimés sur la
 sortie standard **et** insérés dans le widget Tk selon le contexte. Un
@@ -77,7 +65,7 @@ logger centralisé permettrait d'avoir un canal unique, configurable
 modules ; connecter un handler custom qui écrit dans le widget `Text`
 de la GUI ; un handler fichier pour les exécutions automatisées.
 
-### 5. Ajouter un mode CLI
+### 4. Ajouter un mode CLI
 
 **Motivation.** Pour intégrer l'outil à une chaîne automatisée (CI,
 serveur d'analyse, script batch), la GUI Tkinter est un obstacle. Un
@@ -90,7 +78,7 @@ dans `pyproject.toml` (`[project.scripts] pybaseline = "pybaseline.cli:main"`).
 
 ## Moyen terme — robustesse et configurabilité
 
-### 6. Exposer les paramètres d'algorithme
+### 5. Exposer les paramètres d'algorithme
 
 **Motivation.** Les valeurs `window_length=11`, `lambdaFactor=1e3`,
 `exclusionWidthRatio=0.03`, `maxSlope=500`, fréquence `50 Hz`, etc.
@@ -104,7 +92,7 @@ expérience doit modifier le code source.
   démarrage (bibliothèque `tomllib` disponible en stdlib depuis
   Python 3.11).
 
-### 7. Tests unitaires et de non-régression
+### 6. Tests unitaires et de non-régression
 
 **Motivation.** Aucun test n'existe. Toute modification (même une
 correction de typo dans un libellé) peut altérer silencieusement les
@@ -119,7 +107,7 @@ avec sorties attendues :
 - test d'intégration sur l'agrégation Excel (ouverture du XLSX,
   vérification des formules injectées).
 
-### 8. Gestion d'erreurs typée
+### 7. Gestion d'erreurs typée
 
 **Motivation.** `processSignalFile` capture toutes les `Exception` dans
 un unique `except` et encapsule le message dans un dictionnaire. Le code
@@ -130,7 +118,7 @@ ou d'un bug.
 `BaselineEstimationError` héritant de `SWVError`. Ne capturer que ces
 exceptions spécifiques ; laisser remonter les bugs inattendus.
 
-### 9. Détection automatique des séparateurs
+### 8. Détection automatique des séparateurs
 
 **Motivation.** Chaque utilisateur doit manuellement cocher le bon
 séparateur de colonnes et le bon séparateur décimal. Source d'erreur
@@ -141,7 +129,7 @@ pour détecter le séparateur ; tester le parse en `.` puis en `,`
 et retenir celui qui produit des floats. La GUI conserverait le
 choix manuel comme override.
 
-### 10. Support d'autres formats d'entrée
+### 9. Support d'autres formats d'entrée
 
 **Motivation.** Les potentiostats produisent aussi du `.xlsx`, `.csv`,
 ou des formats propriétaires (`.mpt` BioLogic, `.nox` Autolab, etc.).
@@ -152,7 +140,7 @@ format. Les premières lignes des fichiers propriétaires contiennent
 des métadonnées exploitables (fréquence SWV, pas de potentiel, etc.)
 qui pourraient alimenter automatiquement le récapitulatif.
 
-### 11. Internationalisation
+### 10. Internationalisation
 
 **Motivation.** Les libellés de la GUI sont en français. Pour un usage
 hors équipe francophone, la traduction devient nécessaire.
@@ -164,7 +152,7 @@ Détection automatique de la locale système au premier lancement.
 
 ## Long terme — plate-forme et écosystème
 
-### 12. Packaging distribuable
+### 11. Packaging distribuable
 
 **Motivation.** Les utilisateurs finaux (scientifiques) n'ont pas tous
 un environnement Python fonctionnel. Leur demander d'installer Python
@@ -177,7 +165,7 @@ un environnement Python fonctionnel. Leur demander d'installer Python
 - **Paquet pip** sur PyPI si le code est ouvert.
 - **Installation isolée** avec `uv tool install` ou `pipx`.
 
-### 13. Interface Web
+### 12. Interface Web
 
 **Motivation.** Permet un usage multi-utilisateurs, distant, sans
 installation locale. Utile en laboratoire partagé.
@@ -188,7 +176,7 @@ installation locale. Utile en laboratoire partagé.
 - Upload d'un dossier zippé, traitement en file d'attente (Celery,
   RQ), résultats téléchargeables.
 
-### 14. Base de données expérimentale
+### 13. Base de données expérimentale
 
 **Motivation.** Chaque campagne produit aujourd'hui un dossier isolé.
 Pour comparer entre campagnes, il faut ré-ouvrir manuellement chaque
@@ -199,7 +187,7 @@ schéma `Run(date, opérateur, fréquence, …)`, `File(run_id, base,
 électrode, pic_V, pic_A, charge_C, hash_source)`. Interface de
 requête simple (Streamlit ou Jupyter).
 
-### 15. Algorithmes alternatifs de baseline
+### 14. Algorithmes alternatifs de baseline
 
 **Motivation.** asPLS n'est pas universel : certains signaux
 particuliers sont mieux traités par arPLS, airPLS, drPLS, rolling-ball,
@@ -211,7 +199,7 @@ plupart de ces algorithmes. Ajouter un sélecteur dans la GUI ;
 optionnellement, un **mode comparaison** qui trace les baselines
 concurrentes côte à côte sur le PNG.
 
-### 16. Détection multi-pics
+### 15. Détection multi-pics
 
 **Motivation.** Certains SWV présentent plusieurs pics (mélange
 d'espèces électroactives). L'outil actuel n'en détecte qu'un seul.
@@ -221,7 +209,7 @@ avec seuil de prominence. Ajustement gaussien ou lorentzien pour
 l'intégration. Nouvelles colonnes dans le récapitulatif pour le
 deuxième pic, troisième pic…
 
-### 17. Rapport PDF automatique
+### 16. Rapport PDF automatique
 
 **Motivation.** Un fichier Excel + N fichiers PNG = peu pratique à
 archiver ou à partager. Un rapport unifié faciliterait la traçabilité.
@@ -231,7 +219,7 @@ générer un document par campagne : page de garde (métadonnées),
 table des résultats, une page par électrode avec le PNG + les
 valeurs numériques.
 
-### 18. Intégration continue (CI/CD)
+### 17. Intégration continue (CI/CD)
 
 **Motivation.** Aucun garde-fou ne vérifie aujourd'hui qu'un commit
 ne casse pas le code.
@@ -243,7 +231,7 @@ ne casse pas le code.
 - `pytest` pour les tests ;
 - build de l'exécutable PyInstaller à chaque tag.
 
-### 19. Documentation web hébergée
+### 18. Documentation web hébergée
 
 **Motivation.** Le README est utile mais limité. Une documentation
 structurée (tutoriels, référence API, équations d'asPLS) serait
@@ -294,4 +282,4 @@ Idées à évaluer au cas par cas, sans priorité ferme.
 
 Les priorités évoluent avec les retours utilisateurs. Si une évolution
 vous intéresse — ou si vous en voyez une qui manque — ouvrez une issue
-(une fois le dépôt Git initialisé) ou contactez le mainteneur.
+ou contactez le mainteneur.

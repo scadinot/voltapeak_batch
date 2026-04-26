@@ -39,6 +39,7 @@ from tkinter import Button, Frame, IntVar, Label, Radiobutton, StringVar, Text, 
 from typing import cast
 
 import matplotlib
+from numpy.typing import NDArray
 
 # Backend "Agg" (non-interactif) : on ne fait que ``savefig`` ; les workers
 # multiprocessing n'ont pas de boucle Tk et un backend GUI y serait inutile
@@ -122,7 +123,7 @@ def processData(dataFrame) -> tuple:
     signalValues = -dataFrame["Current"].values  # Convention SWV : on ramène les pics vers le haut.
     return potentialValues, signalValues, dataFrame
 
-def smoothSignal(signalValues) -> np.ndarray:
+def smoothSignal(signalValues: NDArray[np.float64]) -> NDArray[np.float64]:
     """Lisse le signal par un filtre polynomial de Savitzky-Golay.
 
     Le filtre préserve l'amplitude et la position du pic tout en
@@ -136,7 +137,7 @@ def smoothSignal(signalValues) -> np.ndarray:
     Retourne:
         numpy.ndarray: signal lissé, même forme que l'entrée.
     """
-    return savgol_filter(signalValues, window_length=11, polyorder=2)
+    return np.asarray(savgol_filter(signalValues, window_length=11, polyorder=2))
 
 def getPeakValue(signalValues, potentialValues, marginRatio=0.10, maxSlope=None) -> tuple:
     """Localise le pic (maximum) du signal en excluant les bords.

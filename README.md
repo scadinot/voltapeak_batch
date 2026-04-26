@@ -97,7 +97,7 @@ Pour chaque fichier `.txt`, la chaîne appliquée est la suivante :
 
 ## Installation
 
-Il est recommandé de créer un environnement virtuel dédié :
+### 1. Créer et activer un environnement virtuel (recommandé)
 
 ```bash
 python -m venv .venv
@@ -107,29 +107,28 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-Puis installer les dépendances :
-
-```bash
-pip install numpy pandas matplotlib pybaselines scipy openpyxl
-```
-
-Alternative équivalente :
+### 2. Installer les dépendances
 
 ```bash
 pip install -r requirements.txt
 ```
 
-(le fichier [requirements.txt](requirements.txt) est tenu à jour avec
-les dépendances déclarées dans `pyproject.toml`.)
+> [requirements.txt](requirements.txt) verrouille les versions au
+> niveau patch (`~=X.Y.Z`) — reproductibilité garantie sur les
+> correctifs de sécurité, sans casse possible sur un changement
+> mineur ou majeur. Le projet n'a pas de `pyproject.toml` : la
+> configuration de chaque outil de lint / typecheck vit dans son
+> fichier dédié ([ruff.toml](ruff.toml), [.pylintrc](.pylintrc),
+> [mypy.ini](mypy.ini), [pyrightconfig.json](pyrightconfig.json)).
 
 ---
 
 ## Lancement
 
-Depuis le dossier du projet :
+Depuis le **dossier parent** du dossier `voltapeak_batch/` :
 
 ```bash
-python voltapeak_batch.py
+python -m voltapeak_batch
 ```
 
 La fenêtre principale s'ouvre :
@@ -308,9 +307,13 @@ compatibilité avec le gel Windows (PyInstaller).
 
 ## Structure du code
 
-Le projet est actuellement un **script monolithique** unique :
+Le projet est un package Python minimal — un seul module applicatif,
+prêt à être éclaté :
 
-- [voltapeak_batch.py](voltapeak_batch.py) — 11 fonctions :
+- [__init__.py](__init__.py) — marque le dossier comme un package et
+  expose `__version__`. Aucune logique applicative n'y figure.
+- [__main__.py](__main__.py) — script monolithique exécuté par
+  `python -m voltapeak_batch`. Contient les **11 fonctions** :
   - `open_folder` — ouverture multiplateforme de l'explorateur ;
   - `readFile` — chargement CSV avec encodage Latin-1 ;
   - `processData` — nettoyage + tri + inversion du signe ;
@@ -322,7 +325,9 @@ Le projet est actuellement un **script monolithique** unique :
   - `processSignalFile` — pipeline complet pour un fichier ;
   - `main` / `launch_gui` — interface Tkinter + orchestration.
 
-Une découpe en modules est prévue (voir [ROADMAP.md](ROADMAP.md)).
+Une découpe en modules dédiés (`io.py`, `processing.py`, `plotting.py`,
+`aggregate.py`, `gui.py`, `cli.py`) est prévue dans la
+[roadmap](ROADMAP.md#1-extraire-le-code-en-modules).
 
 ---
 

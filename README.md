@@ -113,8 +113,14 @@ Puis installer les dépendances :
 pip install numpy pandas matplotlib pybaselines scipy openpyxl
 ```
 
-Aucun fichier `requirements.txt` n'est fourni pour l'instant ; il est
-listé dans la [roadmap](ROADMAP.md#court-terme--qualité-de-base-du-projet).
+Alternative équivalente :
+
+```bash
+pip install -r requirements.txt
+```
+
+(le fichier [requirements.txt](requirements.txt) est tenu à jour avec
+les dépendances déclarées dans `pyproject.toml`.)
 
 ---
 

@@ -280,6 +280,13 @@ un par un dans le processus principal. Deux cas où il est utile :
 Les deux modes partagent le même générateur `iter_results` : la boucle
 d'affichage des logs et de la barre de progression reste identique.
 
+Le backend matplotlib est forcé à `Agg` (non-interactif) dès le
+chargement du module : les workers `multiprocessing` n'ont pas de
+boucle Tk et un backend GUI y serait inutile, voire instable sur
+Linux *headless*. Côté processus principal, seul Tkinter nécessite un
+`$DISPLAY` ; les figures ne sont jamais affichées à l'écran,
+uniquement sauvegardées en PNG.
+
 L'appel `freeze_support()` dans `main()` est nécessaire pour la
 compatibilité avec le gel Windows (PyInstaller).
 

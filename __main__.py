@@ -64,7 +64,7 @@ def open_folder(path):
         path (str): chemin absolu du dossier à ouvrir.
     """
     if platform.system() == "Windows":
-        os.startfile(path)
+        subprocess.Popen(["explorer", path])
     elif platform.system() == "Darwin":  # macOS
         subprocess.call(["open", path])
     else:  # Linux

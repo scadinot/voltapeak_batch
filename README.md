@@ -6,7 +6,7 @@ Outil graphique (Tkinter) de **traitement par lot** de fichiers de voltammétrie
 
 ## Table des matières
 
-1. [À quoi sert cet outil ?](#à-quoi-sert-cet-outil-)
+1. [À quoi sert cet outil ?](#à-quoi-sert-cet-outil)
 2. [Fonctionnalités](#fonctionnalités)
 3. [Prérequis](#prérequis)
 4. [Installation](#installation)
@@ -118,7 +118,7 @@ python -m voltapeak_batch
 | Colonne 2                | Courant en ampères — **pic attendu en valeur négative** (convention SWV cathodique : le pipeline inverse le signe avant `argmax`) |
 | Séparateur de colonnes   | configurable : tabulation / virgule / point-virgule / espace |
 | Séparateur décimal       | configurable : point / virgule                               |
-| Nombre minimal de lignes | 5 (pour permettre le lissage)                                |
+| Nombre minimal de lignes | 11 (fenêtre Savitzky-Golay fixe — `savgol_filter` lève une exception en dessous) |
 
 ### Convention de nommage
 
@@ -183,7 +183,7 @@ Le dossier de sortie est **nettoyé automatiquement** au début de chaque exécu
 
 ### Récapitulatif agrégé
 
-Un unique `<nom_du_dossier>.xlsx` est écrit à la racine du dossier de résultats. Il regroupe **une ligne par base**, avec les colonnes suivantes pour chaque électrode détectée :
+Un unique `<nom_du_dossier>.xlsx` est écrit à la racine du dossier de résultats **dès qu'au moins un fichier valide a été traité** (en l'absence de résultat exploitable, le classeur n'est pas produit). Il regroupe une ligne par base, avec les colonnes suivantes pour chaque électrode détectée :
 
 | Colonne                  | Source                                                                                                                                |
 |--------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
@@ -300,7 +300,7 @@ main()
 ## Performance et multiprocessing
 
 - Par défaut, le script utilise `multiprocessing.Pool(processes=cpu_count())` : **tous les cœurs CPU** sont sollicités.
-- `Pool.imap` (et non `Pool.map`) est volontairement choisi : les résultats sont **restitués au fil de l'eau**, ce qui permet de rafraîchir la barre de progression et le journal pendant le traitement.
+- `Pool.imap` (et non `Pool.map`) est volontairement choisi : les résultats sont **restitués au fil de l'eau dans l'ordre des fichiers d'entrée**, ce qui permet de rafraîchir la barre de progression et le journal pendant le traitement, sans attendre la fin du lot.
 - Le backend matplotlib `'Agg'` (non-interactif) est **obligatoire** : les processus enfants du pool n'ont pas accès au thread Tk.
 
 ### Mode séquentiel (option *Désactiver*)
@@ -309,8 +309,7 @@ L'option *Mode de traitement → Désactiver (traitement séquentiel)* exécute 
 
 - vous **déboguez** le pipeline : les exceptions des workers sont parfois absorbées par le pool et difficiles à tracer ;
 - l'**export PNG matplotlib** se comporte mal sur votre installation (anciens drivers graphiques, conflits de backend) ;
-- vous tournez sur un environnement **contraint** (machine virtuelle à 1 vCPU, sandbox CI) où le `Pool` apporte un surcoût sans gain réel ;
-- vous voulez observer les fichiers traités **dans l'ordre** (en parallèle, l'ordre d'arrivée des résultats est non déterministe).
+- vous tournez sur un environnement **contraint** (machine virtuelle à 1 vCPU, sandbox CI) où le `Pool` apporte un surcoût sans gain réel.
 
 `freeze_support()` est appelé dans `main()` pour permettre un éventuel packaging PyInstaller sous Windows.
 

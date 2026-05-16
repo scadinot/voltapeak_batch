@@ -280,13 +280,13 @@ def processFileWrapper(args):
     """
     return processSignalFile(*args)
 
-def processSignalFile(filePath, outputFolder, sep, decimal, export_choice) -> dict | None:
+def processSignalFile(filePath, outputFolder, sep, decimal, export_processed, export_graph) -> dict | None:
     """Exécute la chaîne complète de traitement sur un fichier unique.
 
     Étapes : lecture → nettoyage → lissage → détection de pic →
     estimation de baseline → correction → nouvelle détection de pic
-    → tracé PNG → export optionnel → extraction des métadonnées
-    (base + électrode via la regex ``(.+)_C(\\d{2})\\.txt``).
+    → tracé PNG optionnel → export optionnel → extraction des
+    métadonnées (base + électrode via la regex ``(.+)_C(\\d{2})\\.txt``).
 
     Les erreurs sont capturées et retournées sous forme de
     dictionnaire ``{"error": ...}`` plutôt que levées, afin que le
@@ -297,8 +297,9 @@ def processSignalFile(filePath, outputFolder, sep, decimal, export_choice) -> di
         outputFolder (str): dossier où écrire PNG/CSV/XLSX.
         sep (str): séparateur de colonnes pour la lecture CSV.
         decimal (str): séparateur décimal pour la lecture CSV.
-        export_choice (int): ``0`` = pas d'export par fichier,
+        export_processed (int): ``0`` = pas d'export par fichier,
             ``1`` = export CSV, ``2`` = export XLSX.
+        export_graph (int): ``0`` = pas de graphique, ``1`` = export PNG.
 
     Retourne:
         dict: en cas de succès, mapping vers une ligne du tableau
@@ -323,15 +324,17 @@ def processSignalFile(filePath, outputFolder, sep, decimal, export_choice) -> di
         signalCorrected = signalSmoothed - baseline
         # Seconde détection sur le signal corrigé : c'est la valeur retenue pour le récapitulatif.
         xCorrectedVoltage, yCorrectedCurrent = getPeakValue(signalCorrected, potentialValues, marginRatio=0.10, maxSlope=500)
-        plotSignalAnalysis(potentialValues, signalValues, signalSmoothed, baseline, signalCorrected, xCorrectedVoltage, yCorrectedCurrent, fileName, outputFolder)
+
+        if export_graph == 1:
+            plotSignalAnalysis(potentialValues, signalValues, signalSmoothed, baseline, signalCorrected, xCorrectedVoltage, yCorrectedCurrent, fileName, outputFolder)
 
         # Ajouter les colonnes calculées au DataFrame, pour l'éventuel export par fichier.
         cleaned_df["SignalLisse"] = signalSmoothed
         cleaned_df["SignalCorrigé"] = signalCorrected
 
-        if export_choice == 1:
+        if export_processed == 1:
             cleaned_df.to_csv(os.path.join(outputFolder, fileName.replace(".txt", ".csv")), index=False)
-        elif export_choice == 2:
+        elif export_processed == 2:
             cleaned_df.to_excel(os.path.join(outputFolder, fileName.replace(".txt", ".xlsx")), index=False)
 
         # Convention de nommage : <base>_C<NN>.txt → base + identifiant d'électrode.
@@ -400,9 +403,8 @@ def launch_gui():
                remplacer la colonne ``Charge (C)`` par une formule
                ``=Courant/Fréq`` (calculée dynamiquement par Excel).
         """
-        export_choice = export_option.get()
-        #export_csv = export_choice == 1
-        #export_excel = export_choice == 2
+        export_processed = export_processed_var.get()
+        export_graph = export_graph_var.get()
 
         log_box.config(state="normal")
         log_box.delete("1.0", "end")
@@ -436,7 +438,7 @@ def launch_gui():
                 os.remove(file)
 
         filePaths = sorted(glob.glob(os.path.join(inputFolder, "*.txt")))
-        fileProcessingArgs = [(filePath, outputFolder, sep, decimal, export_choice) for filePath in filePaths]
+        fileProcessingArgs = [(filePath, outputFolder, sep, decimal, export_processed, export_graph) for filePath in filePaths]
 
         results = []
         start_time = time.time()
@@ -543,7 +545,8 @@ def launch_gui():
 
     sep_var = StringVar(value="Tabulation")
     decimal_var = StringVar(value="Point")
-    export_option = IntVar(value=0)
+    export_processed_var = IntVar(value=0)
+    export_graph_var = IntVar(value=0)
     multi_thread_option = IntVar(value=1)  # 1 = activé par défaut (comportement historique).
 
     # Cadre principal : une grille extensible qui héberge les 5 blocs visuels.
@@ -574,16 +577,22 @@ def launch_gui():
     for i, txt in enumerate(decimal_options):
         ttk.Radiobutton(dec_radio_frame, text=txt, variable=decimal_var, value=txt).grid(row=0, column=i, sticky="w", padx=(0, 10))
 
-    Label(settings_frame, text="Export des fichiers :").grid(row=2, column=0, sticky="w", pady=(5, 0))
+    Label(settings_frame, text="Export des fichiers traités :").grid(row=2, column=0, sticky="w", pady=(5, 0))
     export_radio_frame = Frame(settings_frame)
     export_radio_frame.grid(row=2, column=1, columnspan=4, sticky="w")
-    Radiobutton(export_radio_frame, text="Ne pas exporter", variable=export_option, value=0).pack(side="left", padx=(0, 10))
-    Radiobutton(export_radio_frame, text="Exporter au format .CSV", variable=export_option, value=1).pack(side="left", padx=(0, 10))
-    Radiobutton(export_radio_frame, text="Exporter au format Excel", variable=export_option, value=2).pack(side="left")
+    Radiobutton(export_radio_frame, text="Ne pas exporter", variable=export_processed_var, value=0).pack(side="left", padx=(0, 10))
+    Radiobutton(export_radio_frame, text="Exporter au format .CSV", variable=export_processed_var, value=1).pack(side="left", padx=(0, 10))
+    Radiobutton(export_radio_frame, text="Exporter au format Excel", variable=export_processed_var, value=2).pack(side="left")
 
-    Label(settings_frame, text="Traitement parallèle :").grid(row=3, column=0, sticky="w", pady=(5, 0))
+    Label(settings_frame, text="Export des graphiques :").grid(row=3, column=0, sticky="w", pady=(5, 0))
+    export_radio_frame = Frame(settings_frame)
+    export_radio_frame.grid(row=3, column=1, columnspan=4, sticky="w")
+    Radiobutton(export_radio_frame, text="Ne pas exporter", variable=export_graph_var, value=0).pack(side="left", padx=(0, 10))
+    Radiobutton(export_radio_frame, text="Exporter au format .png", variable=export_graph_var, value=1).pack(side="left", padx=(0, 10))
+
+    Label(settings_frame, text="Mode de traitement :").grid(row=4, column=0, sticky="w", pady=(5, 0))
     multi_thread_radio_frame = Frame(settings_frame)
-    multi_thread_radio_frame.grid(row=3, column=1, columnspan=4, sticky="w")
+    multi_thread_radio_frame.grid(row=4, column=1, columnspan=4, sticky="w")
     Radiobutton(multi_thread_radio_frame, text="Activer le multi-thread (un processus par cœur)", variable=multi_thread_option, value=1).pack(side="left", padx=(0, 10))
     Radiobutton(multi_thread_radio_frame, text="Désactiver (traitement séquentiel)", variable=multi_thread_option, value=0).pack(side="left")
 
